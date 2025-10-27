@@ -8,6 +8,7 @@ type Fixtures = {
 export const test = base.extend<Fixtures>({
   indexPage: async ({ page }, use) => {
     const indexPage = new IndexPage(page);
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     await use(indexPage);
   },
 });
