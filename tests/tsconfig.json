@@ -1,0 +1,16 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": "..",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": [
+    "../vitest.config.ts",
+    "./**/*.ts",
+    "./**/*.test.ts",
+    "./**/*.spec.ts"
+  ]
+}
+
