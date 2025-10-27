@@ -87,7 +87,7 @@ export const TaskForm = ({ onAddTask }: TaskFormProps) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="priority">Priorität</Label>
-              <Select value={priority} onValueChange={(value: any) => setPriority(value)}>
+              <Select value={priority} onValueChange={(value: "high" | "medium" | "low") => setPriority(value)}>
                 <SelectTrigger id="priority">
                   <SelectValue />
                 </SelectTrigger>

@@ -1,17 +1,14 @@
 import { defineConfig } from 'vitest/config';
-// @ts-ignore
 import react from '@vitejs/plugin-react-swc';
-const path = require('path');
+import path from 'path';
 
 export default defineConfig({
-  // @ts-ignore
   plugins: [react()],
   test: {
     globals: true,
     environment: 'jsdom',
     setupFiles: './tests/setup.ts',
     coverage: {
-      provider: 'v8',
       reporter: ['text', 'json', 'html'],
       exclude: [
         'node_modules/',
