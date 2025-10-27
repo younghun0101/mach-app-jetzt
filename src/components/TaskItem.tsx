@@ -37,6 +37,7 @@ export const TaskItem = ({ task, onToggle, onDelete }: TaskItemProps) => {
 
   return (
     <Card
+      data-testid={`task-${task.id}`}
       className={cn(
         "transition-all hover:shadow-md",
         task.completed && "opacity-60"
@@ -46,6 +47,7 @@ export const TaskItem = ({ task, onToggle, onDelete }: TaskItemProps) => {
         <div className="flex items-start gap-4">
           <div className="pt-1">
             <Checkbox
+              data-testid={`task-${task.id}-checkbox`}
               checked={task.completed}
               onCheckedChange={() => onToggle(task.id)}
               className={cn(
@@ -58,6 +60,7 @@ export const TaskItem = ({ task, onToggle, onDelete }: TaskItemProps) => {
           <div className="flex-1 min-w-0 space-y-2">
             <div className="flex items-start justify-between gap-4">
               <h3
+                data-task-title={task.title}
                 className={cn(
                   "font-semibold text-foreground",
                   task.completed && "line-through text-muted-foreground"
@@ -66,6 +69,7 @@ export const TaskItem = ({ task, onToggle, onDelete }: TaskItemProps) => {
                 {task.title}
               </h3>
               <Button
+                data-testid={`task-${task.id}-delete`}
                 variant="ghost"
                 size="sm"
                 onClick={() => onDelete(task.id)}

@@ -1,0 +1,101 @@
+name: CI/CD-Pipeline
+
+on:
+  # Wird ausgeführt, wenn ein PR gegen main oder develop erstellt/aktualisiert wird
+  pull_request:
+    branches: [ main, develop ]
+  # Optional: Bei Push auf main/develop (bei Bedarf einkommentieren)
+  # push:
+  #   branches: [ main, develop ]
+
+jobs:
+  # ==================================
+  # 1. Code Hygiene 
+  # ==================================
+  lint-check:
+    name: 🧹 Code-Hygiene-Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Code auschecken
+        uses: actions/checkout@v4
+
+      - name: Node.js einrichten
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: Abhängigkeiten installieren
+        run: npm ci
+
+      - name: 🔍 ESLint-Prüfung
+        run: npm run lint:check
+
+      - name: 🩺 TypeScript-Typprüfung
+        run: npm run typecheck
+
+  # ==================================
+  # 2. Funktionale Verifikation (schnell)
+  # ==================================
+  unit-test:
+    name: 🧪 Unit- & Coverage-Tests
+    needs: lint-check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Code auschecken
+        uses: actions/checkout@v4
+
+      - name: Node.js einrichten
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Abhängigkeiten installieren
+        run: npm ci
+
+      - name: 🏃 Vitest mit Coverage ausführen
+        run: npm run test:unit:coverage
+        
+      - name: Coverage-Bericht hochladen
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage/
+
+  # ==================================
+  # 3. User-Flow-Verifikation (am langsamsten)
+  # ==================================
+  e2e-test:
+    name: 🌐 Playwright-E2E-Tests
+    needs: unit-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Code auschecken
+        uses: actions/checkout@v4
+
+      - name: Node.js einrichten
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Abhängigkeiten installieren
+        run: npm ci
+
+      - name: Playwright-Browser installieren
+        run: npx playwright install --with-deps chromium
+
+      - name: 🚀 E2E-Tests starten (Playwright)
+        run: npm run test:e2e:smoke
+        env:
+          E2E_BASE_URL: http://localhost:8080
+
+      - name: Playwright-Report hochladen
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+
