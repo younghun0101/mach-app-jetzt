@@ -1,0 +1,113 @@
+name: CI/CD-Pipeline
+
+on:
+  # Wird ausgeführt, wenn ein PR gegen main oder develop erstellt/aktualisiert wird
+  pull_request:
+    branches: [ main, develop ]
+  # Optional: Bei Push auf main/develop (bei Bedarf einkommentieren)
+  # push:
+  #   branches: [ main, develop ]
+
+jobs:
+  # ==================================
+  # 1. Code Hygiene 
+  # ==================================
+  lint-check:
+    name: 🧹 Code-Hygiene-Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Code auschecken
+        uses: actions/checkout@v4
+
+      - name: Node.js einrichten
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # Passend zur Projektversion
+          cache: 'npm'
+          
+      - name: Abhängigkeiten installieren
+        run: npm ci
+
+      - name: 🔍 ESLint- und Prettier-Prüfung
+        run: npm run lint:check # z. B. "eslint . && prettier --check ."
+
+      - name: 🩺 TypeScript-Typprüfung
+        run: npm run typecheck # z. B. "tsc --noEmit"
+
+  # ==================================
+  # 2. Funktionale Verifikation (schnell)
+  # ==================================
+  unit-test:
+    name: 🧪 Unit- & Coverage-Tests
+    needs: lint-check # Läuft nur, wenn der Hygiene-Job erfolgreich war
+    runs-on: ubuntu-latest
+    steps:
+      - name: Code auschecken
+        uses: actions/checkout@v4
+
+      - name: Node.js einrichten
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Abhängigkeiten installieren
+        run: npm ci
+
+      - name: 🏃 Vitest mit Coverage ausführen
+        # Empfehlung: Script in package.json definieren
+        run: npm run test:unit:coverage # z. B. "vitest run --coverage --passWithNoTests"
+        
+      - name: Coverage-Bericht hochladen (optional)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage/
+
+  # ==================================
+  # 3. User-Flow-Verifikation (am langsamsten)
+  # ==================================
+  e2e-test:
+    name: 🌐 Playwright-E2E-Tests
+    needs: unit-test # Läuft nur, wenn Unit-Tests erfolgreich waren
+    runs-on: ubuntu-latest
+    steps:
+      - name: Code auschecken
+        uses: actions/checkout@v4
+
+      - name: Node.js einrichten
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Abhängigkeiten installieren
+        run: npm ci
+
+      # Browser-Caching spart Zeit
+      - name: Playwright-Browser cachen
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
+
+      - name: Playwright-Browser installieren (nur bei Cache-Miss)
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps
+
+      - name: ⚙️ React-App für E2E bauen
+        # Vor den Tests App bauen (oder webServer-Start im PW-Config nutzen)
+        run: npm run build
+
+      - name: 🚀 E2E-Tests starten (Playwright)
+        # Annahme: webServer in playwright.config.ts konfiguriert
+        run: npm run test:e2e # z. B. "npx playwright test"
+
+      - name: Playwright-Report hochladen (optional)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
